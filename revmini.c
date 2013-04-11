@@ -7,10 +7,10 @@
 #define max 2050 //max allowed size of secret message in bits=2048 bits = 256 bytes
 
 struct Node{
-char ame[64]; //american word 
-char bri[64]; //british word
-int col; //whether node is 0-1 (straight=0) or a 1-0 (reversed copy=1) of an existing node 1-0
-struct Node* next;
+	char ame[64]; //american word 
+	char bri[64]; //british word
+	int col; //whether node is 0-1 (straight=0) or a 1-0 (reversed copy=1) of an existing node 1-0
+	struct Node* next;
 };
 
 typedef struct Node* node; //otherwise struct is necessary
@@ -30,61 +30,61 @@ char secret[max];
 int secretpos=0,secretlen;
 
 int calchash(char buf[]){
-int val=0,pos=0;
+	int val=0,pos=0;
 
-while(buf[pos]!='\0'){
-val+=(int)buf[pos];
-pos++;
-}
- return val%hash_size;
+	while(buf[pos]!='\0'){
+		val+=(int)buf[pos];
+		pos++;
+	}
+ 	return val%hash_size;
 }//calchash close
 
 
 node getnode(){
-return (node)malloc(sizeof(struct Node));
+	return (node)malloc(sizeof(struct Node));
 } //getnode() close
 
 void addtotable(char buf1[], int pos1, char buf2[], int pos2){
 
-node wptr1=hash[pos1];
+	node wptr1=hash[pos1];
 
-node p=getnode();
+	node p=getnode();
 
-strcpy(p->ame,buf1);
-strcpy(p->bri,buf2);
-p->col=0;
-p->next=NULL;
+	strcpy(p->ame,buf1);
+	strcpy(p->bri,buf2);
+	p->col=0;
+	p->next=NULL;
 
-if(wptr1==NULL) hash[pos1]=p;
+	if(wptr1==NULL) hash[pos1]=p;
 
-else{
+	else{
 
-node temp=hash[pos1];
-while(temp->next!=NULL) temp=temp->next;
+		node temp=hash[pos1];
+		while(temp->next!=NULL) temp=temp->next;
 
-temp->next=p;
-}
+		temp->next=p;
+	}
 
-//do the same for the second string
+	//do the same for the second string
 
-node wptr2=hash[pos2];
+	node wptr2=hash[pos2];
 
-p=getnode();
+	p=getnode();
 
-strcpy(p->ame,buf2);
-strcpy(p->bri,buf1);
-p->col=1;
-p->next=NULL;
+	strcpy(p->ame,buf2);
+	strcpy(p->bri,buf1);
+	p->col=1;
+	p->next=NULL;
 
-if(wptr2==NULL) hash[pos2]=p;
+	if(wptr2==NULL) hash[pos2]=p;
 
-else{
+	else{
 
-node temp=hash[pos2];
-while(temp->next!=NULL) temp=temp->next;
+		node temp=hash[pos2];
+		while(temp->next!=NULL) temp=temp->next;
 
-temp->next=p;
-}
+		temp->next=p;
+	}
 
 }//addtotable() close
 
