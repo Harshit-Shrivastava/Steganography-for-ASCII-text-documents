@@ -4,7 +4,7 @@
 #include <math.h>
 
 #define hash_size 256
-#define max 200
+#define max 2050 //max allowed size of secret message in bits=2048 bits = 256 bytes
 
 struct Node{
 char ame[64]; //american word 
@@ -23,6 +23,7 @@ node getnode();
 void addtotable(char*, int, char*, int);
 void testlist();
 void createtable();
+void decrypt(char*);
 
 node hash[256]; 
 char secret[max];
@@ -141,9 +142,7 @@ while(c!=EOF){
   buf2[pos2]='\0';
    
   int val1=calchash(buf1);
-  //printf("%d",val1);
   int val2=calchash(buf2);
-  //printf("%d",val2);
 
   addtotable(buf1,val1,buf2,val2);
   
@@ -157,8 +156,6 @@ while(c!=EOF){
 node search(char buf[]){
  
  int index=calchash(buf); //index in hash table for the current word
-    
-    //printf("%d ",index);
     
  node temp=hash[index];
   
@@ -180,9 +177,6 @@ void extract(){
 	int match=0;
 	
 	FILE* f1=fopen("cover.txt","r"); //initial cover text
-    
-	//FILE* f2=fopen
-	("cover.txt","w"); //modified cover text to be sent to the other side
 
     c=getc(f1);
      
@@ -207,13 +201,7 @@ void extract(){
     if(pairword!=NULL){
 		match++;
 	    secret[secretpos++]=pairword->col+48;
-	//	printf("matches=
-	//printf("%s%d","#matches=",match);
-//	printf("%s %s %d \n",pairword->ame,pairword->bri,pairword->col);
-        //printf("%d",pairword->col);
     }
-
-//    puts(buf);
 
 }//while(c!=EOF) close
 
@@ -221,18 +209,16 @@ void extract(){
     secretlen=secretpos;	
 	fclose(f1);
 	
-//	printf("%s%d\n","#matches=",match);
-	
 }//extract() close
 
-void display(){
+void decrypt(char* pass){
 	
+	FILE *f1=fopen("decryptme.txt","w");
 	
-	int i,k,n,val=0;
+	int i,k,n,val=0,endmarker=0; //endmarker is used to search for the delimiter %%
+	char temp;
 	
-	printf("Secret Message:");
-	
-	for(i=0;i<secretlen-16;i+=8){  //secretlen-16 will discard %% appended at the end of secret[] as binary bits
+	for(i=0;i<secretlen;i+=8){  //secretlen-16 will discard %% appended at the end of secret[] as binary bits
 		                           //check presence of %% if length of secret message is not pre-defined!
 		val=0;
 		
@@ -241,23 +227,82 @@ void display(){
                	val+=n*pow(2.0,(double)k);
 		}
 		
-		printf("%c",(char)val);
+		if((char)val=='%'){
+			 ++endmarker;
+			 temp=(char)val;
+		i+=8;
 		
+		val=0;
+		
+		for(k=0;k<8;k++){
+			n=(int)secret[i+7-k]-48;
+               	val+=n*pow(2.0,(double)k);
+		}
+		
+		if((char)val=='%') ++endmarker;
+	}//if val=='%' close
+		
+		if(endmarker==2) break;
+		
+		else if(endmarker==1){
+			putc(temp,f1);
+			//printf("%c",temp);
+			
+			putc((char)val,f1);
+			//printf("%c",(char)val);
+			endmarker=0;
+		    continue;
+		}
+		
+	    putc((char)val,f1);
+	    //printf("%c",(char)val);
 	}
 	
-}//display() close
+	fclose(f1);
+	
+	char initcomm[]="openssl enc -d -aes-256-cbc -a -in decryptme.txt -out decrypted.txt.gz -pass pass:";
+	char command[1024];
+	
+	memset(command,'\0',1024); //prevent garbage during string handling
+	
+	strcat(command,initcomm);
+	strcat(command,pass);
+     
+    int ret=system(command);
+	
+	if (ret!=0)
+	printf("Error while decrypting the message. Exiting \n");	
+		
+}//decrypt() close
 
-int main(){
+
+void decompress(){
+
+int ret;
+    	
+	ret=system("gunzip -c decrypted.txt.gz > message.txt");
+	
+	if (ret!=0)
+	printf("Error while decompressing the message. Exiting \n");
+	
+}
+
+int main(int argc, char* argv[]){
+
+if(argc!=2){
+printf("%s","Usage: <executable name> <password> \n");
+exit(1);
+}
 
 createtable();
 
 extract(); //extracts secret data (in binary) to secret[]
 
-//puts(secret);
+decrypt(argv[1]); //decompresses and decrypts the received stego object
 
-display(); //decodes binary data in secret[] to ASCII
+decompress();
 
-//printf("%d",secretpos);
+printf("Secret message written to message.txt\n");
 
 return 0;
 }
