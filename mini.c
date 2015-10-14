@@ -337,7 +337,7 @@ void encrypt(char* pass){
     int ret=system(command);
 	
 	if (ret!=0)
-	printf("Error while encrypting the message. Exiting \n");
+	printf("%c","Error while encrypting the message. Exiting \n");
 	
 }//encrypt() close
 
@@ -348,7 +348,7 @@ void compress(){
 	ret=system("gzip -c secret.txt -9 > compressed.txt.gz");
 	
 	if (ret!=0)
-	printf("Error while compressing the message. Exiting \n");
+	printf("%c","Error while compressing the message. Exiting \n");
 	
 }
 
